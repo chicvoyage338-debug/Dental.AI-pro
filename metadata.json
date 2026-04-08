@@ -1,0 +1,5 @@
+{
+  "name": "DentAI Pro",
+  "description": "Advanced dental AI for patient records, X-ray analysis, and diagnosis.",
+  "requestFramePermissions": ["camera"]
+}

@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "Patient": {
+      "title": "Patient",
+      "description": "A dental patient record",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name of the patient" },
+        "age": { "type": "number", "description": "Age of the patient" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
+        "contact": { "type": "string", "description": "Phone or email" },
+        "medicalHistory": { "type": "string", "description": "Relevant medical history" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "DentalRecord": {
+      "title": "Dental Record",
+      "description": "A specific visit or scan result",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string", "description": "Reference to Patient ID" },
+        "date": { "type": "string", "format": "date-time" },
+        "symptoms": { "type": "array", "items": { "type": "string" } },
+        "findings": { "type": "string", "description": "AI or manual findings (e.g., lesions)" },
+        "diagnosis": { "type": "string", "description": "Professional or AI diagnosis" },
+        "treatmentPlan": { "type": "string", "description": "Recommended treatment" },
+        "imageUrl": { "type": "string", "description": "URL of the scan/X-ray" },
+        "status": { "type": "string", "enum": ["Pending", "Completed", "Follow-up"] },
+        "xrayDetails": {
+          "type": "object",
+          "properties": {
+            "boneLoss": { "type": "string" },
+            "caries": { "type": "string" },
+            "periapical": { "type": "string" }
+          }
+        }
+      },
+      "required": ["patientId", "date"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A scheduled dental appointment",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "type": { "type": "string", "enum": ["Checkup", "Cleaning", "Extraction", "Filling", "Root Canal", "Other"] },
+        "status": { "type": "string", "enum": ["Scheduled", "Confirmed", "Completed", "Cancelled"] }
+      },
+      "required": ["patientId", "date", "time", "type"]
+    }
+  },
+  "firestore": {
+    "/patients": {
+      "schema": "Patient",
+      "description": "Collection of patient profiles"
+    },
+    "/patients/{patientId}/records": {
+      "schema": "DentalRecord",
+      "description": "History of dental records for a patient"
+    },
+    "/appointments": {
+      "schema": "Appointment",
+      "description": "Global schedule of appointments"
+    }
+  }
+}

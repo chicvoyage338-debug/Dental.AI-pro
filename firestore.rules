@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: patients
+    // Fields:
+    //   - name: string (required)
+    //   - age: number
+    //   - gender: string (Male, Female, Other)
+    //   - contact: string (required)
+    //   - lastVisit: string (ISO date)
+    //   - medicalHistory: string
+    //   - ownerId: string (required)
+    //
+    // Collection: scans
+    // Fields:
+    //   - patientId: string (required)
+    //   - imageUrl: string (required)
+    //   - timestamp: string (ISO date)
+    //   - findings: string
+    //   - diagnosis: string
+    //   - status: string (Pending, Completed, Reviewed)
+    //   - ownerId: string (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
+    }
+
+    function isValidPatient(data) {
+      return data.keys().hasAll(['name', 'contact', 'ownerId']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.contact is string && data.contact.size() > 0 && data.contact.size() < 100 &&
+             data.ownerId == request.auth.uid;
+    }
+
+    function isValidScan(data) {
+      return data.keys().hasAll(['patientId', 'imageUrl', 'timestamp', 'ownerId']) &&
+             data.patientId is string &&
+             data.imageUrl is string && data.imageUrl.matches("^https://.*") &&
+             data.ownerId == request.auth.uid;
+    }
+
+    match /patients/{patientId} {
+      allow read: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidPatient(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidPatient(request.resource.data);
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+
+    match /scans/{scanId} {
+      allow read: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidScan(request.resource.data);
+      allow update: if isAuthenticated() && isDocOwner() && isValidScan(request.resource.data);
+      allow delete: if isAuthenticated() && isDocOwner();
+    }
+    
+    match /test/connection {
+      allow read: if true; // For connection testing
+    }
+  }
+}
